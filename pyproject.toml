@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codeatlas"
+version = "0.1.0"
+description = "Repository search with Python AST symbols and caller analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Michael Dai"}]
+dependencies = []
+
+[project.optional-dependencies]
+semantic = ["sentence-transformers>=3,<6"]
+
+[project.scripts]
+codeatlas = "codeatlas.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["codeatlas*"]
+
+[tool.setuptools.package-data]
+codeatlas = ["static/*.html", "static/*.js"]

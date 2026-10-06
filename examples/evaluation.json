@@ -1,0 +1,8 @@
+[
+  {"question": "Validate bearer token user identity", "symbol": "auth.verify_token"},
+  {"question": "Authenticate request Authorization header", "symbol": "auth.authenticate_request"},
+  {"question": "Sum quantities unit price excluding tax", "symbol": "billing.calculate_total"},
+  {"question": "Create invoice total amount", "symbol": "billing.create_invoice"},
+  {"question": "Authenticate caller before creating billing invoice", "symbol": "api.handle_invoice"},
+  {"question": "Read cached value for key", "symbol": "cache.Cache.get"}
+]

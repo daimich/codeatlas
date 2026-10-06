@@ -1,0 +1,7 @@
+.git
+.venv
+__pycache__
+.atlas
+.codeatlas
+.env
+*.egg-info
