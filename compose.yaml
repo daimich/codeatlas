@@ -1,0 +1,24 @@
+services:
+  codeatlas:
+    build:
+      context: .
+      args:
+        ENABLE_SEMANTIC: ${ENABLE_SEMANTIC:-0}
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - codeatlas-data:/data
+      - embedding-cache:/home/appuser/.cache
+    environment:
+      SEMANTIC_MODEL: ${SEMANTIC_MODEL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      OLLAMA_URL: http://ollama:11434
+  ollama:
+    image: ollama/ollama:0.40.0
+    profiles: [ai]
+    volumes:
+      - ollama-models:/root/.ollama
+volumes:
+  codeatlas-data:
+  embedding-cache:
+  ollama-models:

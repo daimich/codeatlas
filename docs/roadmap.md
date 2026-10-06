@@ -1,11 +1,11 @@
-# Roadmap
+# Remaining extensions
 
-The current release is an end-to-end local MVP. These extensions are not yet implemented.
+Version 0.2 completes the documented local index → search/explain → inspect callers → refresh workflow, including incremental parsing, persistent embeddings, diagnostics and automated acceptance checks. The following are separate future extensions:
 
-1. Measure retrieval on multiple real repositories with held-out natural-language queries.
-2. Improve Python name binding and resolution for shadowed names and imported packages.
-3. Add incremental updates using stored file hashes, including file deletions and renames.
-4. Add Tree-sitter symbol extraction and graph analysis for TypeScript, Go, and Rust.
-5. Compare code-specialized embeddings and rerankers before adding grounded code explanations.
+1. Held-out retrieval and explanation evaluation across real repositories.
+2. Richer Python binding, inheritance and dynamic-call approximations.
+3. Tree-sitter syntax graphs for TypeScript, Go and Rust.
+4. Evaluated code-specialized embeddings, rerankers and ANN search.
+5. Commit-aware provenance, filesystem watching and authenticated team hosting.
 
-Keep performance and comprehension claims tied to a committed dataset and reproducible command.
+Keep accuracy and performance claims tied to committed datasets and reproducible commands.

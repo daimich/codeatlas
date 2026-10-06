@@ -6,6 +6,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from .models import ModelError
+
 LOG = logging.getLogger(__name__)
 MAX_BODY = 22 * 1024 * 1024
 
@@ -16,7 +18,7 @@ def make_server(service, port=8081, bind="127.0.0.1"):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
-            self.connection.settimeout(100)
+            self.connection.settimeout(150)
 
         def log_message(self, *args):
             # Queries and document text are deliberately excluded from access logs.
@@ -55,8 +57,7 @@ def make_server(service, port=8081, bind="127.0.0.1"):
             elif parsed.path == "/api/health":
                 self.send(200, {"status": "ok"})
             elif parsed.path == "/api/status":
-                meta = service.index.metadata()
-                self.send(200, {k: v for k, v in meta.items() if k not in {"root", "digests", "unresolved_calls"}})
+                self.send(200, service.status())
             else:
                 self.send(404, {"error": "Not found"})
 
@@ -77,10 +78,16 @@ def make_server(service, port=8081, bind="127.0.0.1"):
                 path = urlparse(self.path).path
                 if path == "/api/search":
                     self.send(200, service.search(payload.get("question"), payload.get("k", 5)))
+                elif path == "/api/ask":
+                    self.send(200, service.ask(payload.get("question"), payload.get("k", 5)))
+                elif path == "/api/reindex":
+                    self.send(200, service.reindex())
                 elif path == "/api/impact":
                     self.send(200, service.impact(payload.get("symbol"), payload.get("depth", 3)))
                 else:
                     self.send(404, {"error": "Not found"})
+            except ModelError as exc:
+                self.send(503, {"error": str(exc)})
             except (ValueError, TypeError) as exc:
                 self.send(400, {"error": str(exc)})
             except Exception:

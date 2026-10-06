@@ -1,31 +1,19 @@
-# Architecture and engineering decisions
+# Architecture and decisions
 
-The scanner uses `git ls-files --cached --others --exclude-standard` when Git is available. Otherwise it walks the directory while pruning generated and hidden folders. It skips symlinks, sensitive-looking filenames, unsupported extensions, and files over 512 KiB; at most 10,000 supported files are accepted. These exclusions do not replace secret scanning or access control.
+The scanner prefers `git ls-files --cached --others --exclude-standard`. If unavailable or unsuccessful, it walks the directory while pruning hidden/generated folders; this fallback does not interpret .gitignore. It skips symlinks, sensitive-looking names, unsupported extensions and files over 512 KiB, and caps supported files at 10,000. Exclusions do not replace secret scanning or access control.
 
-Python files are parsed with `ast.parse`, never imported. Records retain qualified names, docstrings, decorator-aware start lines, end lines, and source text. Module records retain the first 120 lines; non-Python files and syntax-error fallbacks use 80-line windows with 16 lines of overlap. Class and function records can overlap. Dense encoders may truncate long symbol text to their model token limit; BM25 scores the full stored record.
+Python is parsed with `ast.parse`, never imported. Records retain nested qualified names, decorators, docstrings, line ranges and text. Every file has 80-line text windows with 16-line overlap, including Python module-level code after line 120. Python functions/classes also get symbol records; these overlap module windows. Syntax-error files fall back to text windows with warnings. Long symbol inputs can be truncated by an embedding model's token limit.
 
-The resolver links lexical names, imported names and aliases, relative imports, and `self`/`cls` method names when the qualified target exists in the snapshot. It does not resolve arbitrary objects or fall back to global short-name guessing. Python scoping and runtime dispatch are richer than this resolver: shadowing, local import scope, inheritance, closures, and dynamic bindings can still create incorrect or missing edges. Every unresolved call is retained in metadata.
+Scope-local binding collection recognizes parameters, assignments, globals/nonlocals, imports and aliases without leaking nested imports into siblings. Function scopes do not close over class namespaces. Conventional `self`/`cls` calls are linked only when their receiver is not reassigned; static methods do not get an instance receiver. Package reexports and common src layouts are supported. Repeated definitions get distinct record IDs; ambiguous targets stay unresolved. No global short-name guessing is used.
 
-The complete snapshot is replaced in one SQLite transaction. Reindexing removes old symbols and edges, including deleted files. Hash metadata is saved for a future incremental implementation; the current indexer reparses all files. A running service keeps an immutable in-memory snapshot and must restart to see new index data.
+The graph is conservative, not a full Python runtime model. Dynamic object dispatch, inheritance, lambdas/comprehensions, control-flow-dependent rebinding and external callers remain incomplete. Unresolved calls are retained in CLI status metadata. Reverse-call breadth-first traversal uses depth limits and a visited set for cycles.
 
-Impact analysis walks the reverse call graph with breadth-first search. A visited set prevents cycles from duplicating symbols, and the depth limit bounds traversal. Results represent possible static callers, not a promise that a change will affect them at runtime.
+A versioned file cache reuses parsing results for unchanged content hashes. Changes and deletions recompute the graph and replace all records, edges, metadata and file-cache entries in one transaction. Every build assigns a revision. The server detects a changed revision on its next operation and reads one consistent SQLite snapshot; no restart is required. Changes to source require explicit reindexing.
 
-Retrieval uses BM25 with camel-case and underscore splitting. Optional normalized Sentence Transformers vectors contribute a dense ranking; reciprocal rank fusion combines those rankings. A general text model is a baseline, not a code-comprehension benchmark. There is no LLM-generated code explanation in the current release.
+BM25 uses inverted token postings. Optional normalized dense vectors are cached in `<db>.vectors.sqlite3` by model name and content hash, then scanned in memory and fused with BM25 using reciprocal ranks. Query vectors are computed per request. The disposable cache uses JSON numeric arrays; it retains unused vectors after deletion, not source text. Remove it when replacing model weights under the same name/path.
 
-## Challenges this implementation addresses
+Ollama generates at most four JSON claims from bounded source context, citing short IDs. The server attaches exact source excerpts and their file/line ranges. Invalid output gets one retry; persistent failures are visible. Citation provenance does not guarantee a correct explanation. Without a model, ask returns source evidence explicitly labeled as such.
 
-- Avoiding execution of potentially untrusted repository code.
-- Resolving imports and preserving source ranges through AST indexing.
-- Safely handling incomplete or syntactically invalid repositories.
-- Preventing stale symbols after files are renamed or deleted.
-- Tracing transitive callers with cycles and ambiguous short names.
+The local web server checks Host/Origin, bounds input and renders source as text. The Docker image runs as a non-root user and supports read-only source mounts and persistent index volumes. Hosted authentication, tenancy and remote access controls are outside this scope.
 
-## Primary implementation references
-
-- [Python AST documentation](https://docs.python.org/3/library/ast.html)
-- [Git ls-files](https://git-scm.com/docs/git-ls-files)
-- [Sentence Transformers encode API](https://sbert.net/docs/package_reference/sentence_transformer/model.html)
-
-## Scaling path
-
-Add incremental file hashing, Tree-sitter symbol extraction for TypeScript/Go/Rust, lexical binding analysis and graph resolution tests, a vector index, evaluated code-specialized embeddings, and commit-aware symbol provenance. Build an explanation layer only after retrieval and source citation quality are measured.
+Primary references: [Python AST](https://docs.python.org/3/library/ast.html), [Git ls-files](https://git-scm.com/docs/git-ls-files), [Sentence Transformers](https://sbert.net/docs/package_reference/sentence_transformer/model.html), [Ollama generation](https://docs.ollama.com/api/generate).

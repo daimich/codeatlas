@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 from pathlib import Path
 
 from .indexer import Index
@@ -10,13 +11,19 @@ from .web import make_server
 def main():
     parser = argparse.ArgumentParser(description="CodeAtlas repository intelligence")
     parser.add_argument("--db", default=".codeatlas/index.sqlite3")
-    parser.add_argument("--semantic-model", help="Sentence Transformers model path or ID")
+    parser.add_argument("--semantic-model", default=os.environ.get("SEMANTIC_MODEL"), help="Sentence Transformers model path or ID")
+    parser.add_argument("--ollama-model", default=os.environ.get("OLLAMA_MODEL"))
+    parser.add_argument("--ollama-url", default=os.environ.get("OLLAMA_URL", "http://localhost:11434"))
     sub = parser.add_subparsers(dest="command", required=True)
     index = sub.add_parser("index")
     index.add_argument("path", type=Path)
     search = sub.add_parser("search")
     search.add_argument("question")
     search.add_argument("--k", type=int, default=5)
+    ask = sub.add_parser("ask")
+    ask.add_argument("question")
+    ask.add_argument("--k", type=int, default=5)
+    sub.add_parser("reindex")
     impact = sub.add_parser("impact")
     impact.add_argument("symbol")
     impact.add_argument("--depth", type=int, default=3)
@@ -26,14 +33,24 @@ def main():
     serve.add_argument("--bind", choices=["127.0.0.1", "0.0.0.0"], default="127.0.0.1")
     evaluate = sub.add_parser("eval")
     evaluate.add_argument("--dataset", type=Path, default=Path("examples/evaluation.json"))
+    sub.add_parser("doctor")
     args = parser.parse_args()
     try:
         if args.command == "index":
             result = Index(args.db).build(args.path)
             print(json.dumps({k: v for k, v in result.items() if k not in {"digests", "unresolved_calls"}}, indent=2))
             return
-        service = Service(args.db, args.semantic_model)
-        if args.command == "search":
+        service = Service(args.db, args.semantic_model, args.ollama_model, args.ollama_url)
+        if args.command == "doctor":
+            status = service.status(check=True)
+            print(json.dumps(status, indent=2))
+            if not status["ready"]:
+                parser.exit(1)
+        elif args.command == "reindex":
+            print(json.dumps(service.reindex(), indent=2))
+        elif args.command == "ask":
+            print(json.dumps(service.ask(args.question, args.k), indent=2))
+        elif args.command == "search":
             print(json.dumps(service.search(args.question, args.k), indent=2))
         elif args.command == "impact":
             print(json.dumps(service.impact(args.symbol, args.depth), indent=2))

@@ -1,0 +1,41 @@
+name: Real models
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/models.yml'
+      - 'scripts/test_live_models.py'
+      - 'codeatlas/models.py'
+      - 'codeatlas/embeddings.py'
+      - 'codeatlas/answers.py'
+      - 'codeatlas/retrieval.py'
+permissions:
+  contents: read
+jobs:
+  real-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install '.[semantic]'
+      - run: docker run -d --name ollama -p 127.0.0.1:11434:11434 ollama/ollama:0.40.0
+      - name: Wait for Ollama and pull the test model
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags; then break; fi
+            sleep 1
+          done
+          docker exec ollama ollama pull qwen2.5:1.5b
+      - run: python scripts/test_live_models.py > live-model-result.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-model-result
+          path: live-model-result.json
+      - if: failure()
+        run: docker logs ollama
