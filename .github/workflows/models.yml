@@ -30,7 +30,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:11434/api/tags; then break; fi
             sleep 1
           done
-          docker exec ollama ollama pull qwen2.5:1.5b
+          docker exec ollama ollama pull qwen2.5:3b
       - run: python scripts/test_live_models.py > live-model-result.json
       - uses: actions/upload-artifact@v4
         if: always()

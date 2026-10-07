@@ -7,7 +7,7 @@ The completion target is a dependable single-user local application. These check
 | Unit/regression tests | 26 tests; Python 3.11, 3.12 and 3.13 in CI |
 | Browser acceptance | Actual Chromium UI interactions, persistence/refresh, empty states, browser errors |
 | Docker acceptance | Image startup, real HTTP endpoints, named-volume replacement, deletion/refresh |
-| Real-model acceptance | Actual MiniLM embeddings, persisted vectors, Ollama Qwen 2.5 1.5B generation over HTTP, valid citations, fixture answer content and abstention for absent facts |
+| Real-model acceptance | Actual MiniLM embeddings, persisted vectors, Ollama Qwen 2.5 3B generation over HTTP, valid citations, fixture answer content and abstention for absent facts |
 | Toy evaluation | Six committed retrieval queries; Recall@5 and MRR@5 |
 
 ## Reproduce
@@ -25,7 +25,7 @@ Real models require installed semantic dependencies, a running Ollama service an
 
 ```bash
 python -m pip install '.[semantic]'
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:3b
 python scripts/test_live_models.py
 ```
 

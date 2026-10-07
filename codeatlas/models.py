@@ -73,7 +73,7 @@ def generate_claims(question, evidence, model, endpoint):
         sources[f"S{len(sources) + 1}"] = dict(item, text=excerpt)
         remaining -= len(excerpt)
     schema = {"type": "object", "properties": {
-        "claims": {"type": "array", "maxItems": 4, "items": {
+        "claims": {"type": "array", "minItems": 0, "maxItems": 4, "items": {
             "type": "object", "properties": {
                 "text": {"type": "string"}, "citation": {"type": "string", "enum": list(sources)}},
             "required": ["text", "citation"], "additionalProperties": False}}},

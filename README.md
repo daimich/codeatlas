@@ -58,9 +58,9 @@ Create/activate a virtual environment if desired, then install semantic support.
 
 ```bash
 python -m pip install '.[semantic]'
-ollama pull qwen2.5:1.5b
-python -m codeatlas --semantic-model sentence-transformers/all-MiniLM-L6-v2 --ollama-model qwen2.5:1.5b doctor
-python -m codeatlas --semantic-model sentence-transformers/all-MiniLM-L6-v2 --ollama-model qwen2.5:1.5b serve
+ollama pull qwen2.5:3b
+python -m codeatlas --semantic-model sentence-transformers/all-MiniLM-L6-v2 --ollama-model qwen2.5:3b doctor
+python -m codeatlas --semantic-model sentence-transformers/all-MiniLM-L6-v2 --ollama-model qwen2.5:3b serve
 ```
 
 Both models are optional and independent. Embedding weights download on first use; a local model directory also works. `doctor` loads the embedding model and checks Ollama's installed models, returning a failure exit status for incomplete setup. The embedding model is a general-text baseline, not a code-specialized model. Evaluate it on your repository before making quality claims.
@@ -90,12 +90,12 @@ For the Compose AI profile, create a local `.env` file:
 ```dotenv
 ENABLE_SEMANTIC=1
 SEMANTIC_MODEL=sentence-transformers/all-MiniLM-L6-v2
-OLLAMA_MODEL=qwen2.5:1.5b
+OLLAMA_MODEL=qwen2.5:3b
 ```
 
 ```bash
 docker compose --profile ai up --build -d
-docker compose exec ollama ollama pull qwen2.5:1.5b
+docker compose exec ollama ollama pull qwen2.5:3b
 docker compose exec codeatlas doctor
 ```
 

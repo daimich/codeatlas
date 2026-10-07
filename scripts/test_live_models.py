@@ -19,7 +19,7 @@ from codeatlas import models
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--semantic-model', default='sentence-transformers/all-MiniLM-L6-v2')
-    parser.add_argument('--ollama-model', default='qwen2.5:1.5b')
+    parser.add_argument('--ollama-model', default='qwen2.5:3b')
     parser.add_argument('--ollama-url', default='http://127.0.0.1:11434')
     args = parser.parse_args()
     # Observe actual fixture-model responses without replacing inference.
