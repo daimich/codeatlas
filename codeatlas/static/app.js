@@ -35,14 +35,15 @@ $('query-form').addEventListener('submit', async (event) => {
     const explain = $('answer-mode').value === 'ask';
     const result = await api(explain ? 'ask' : 'search', {question: $('query').value, k: explain ? 4 : 8}); $('results').replaceChildren();
     if (explain) {
-      $('mode').textContent = result.mode === 'ollama' ? 'Explanation with sources' : 'Source evidence';
-      if (result.abstained) $('results').append(node('div', 'No supporting evidence was found.', 'empty'));
+      const showEvidence = result.abstained && result.evidence.length > 0;
+      $('mode').textContent = showEvidence ? 'Source evidence · model abstained' : (result.mode === 'ollama' ? 'Explanation with sources' : 'Source evidence');
+      if (result.abstained) $('results').append(node('div', showEvidence ? 'The model could not support an answer. Review the retrieved source below.' : 'No supporting evidence was found.', 'empty'));
       for (const claim of result.claims) {
         const card = node('article', '', 'card');
         card.append(node('p', claim.text), node('div', claim.path + ':' + claim.start + '–' + claim.end, 'citation'));
         const pre = node('pre', ''); pre.append(node('code', claim.quote)); card.append(pre); $('results').append(card);
       }
-      if (result.mode === 'evidence') result.evidence.forEach(hit => $('results').append(codeCard(hit)));
+      if (result.mode === 'evidence' || showEvidence) result.evidence.forEach(hit => $('results').append(codeCard(hit)));
       status(result.retrieval + ' · total ' + result.total_ms + ' ms'); return;
     }
     $('mode').textContent = result.hits.length + ' search results';

@@ -101,17 +101,22 @@ class ModelTests(unittest.TestCase):
     def test_generated_explanation_has_exact_source_locations(self):
         from codeatlas.answers import answer
         hit = {'id': 'x', 'path': 'a.py', 'start': 10, 'end': 12, 'qualified': 'a.run', 'text': 'def run():\n    return 1'}
-        with patch('codeatlas.models.model_request', return_value={'response': json.dumps({'abstain': False, 'claims': [{'text': 'Returns one.', 'citation': 'S1'}]})}):
+        with patch('codeatlas.models.model_request', return_value={'message': {'content': json.dumps({'claims': [{'text': 'Returns one.', 'citation': 'S1'}]})}}):
             result = answer('What does run do?', [hit], 'model')
         self.assertEqual(result['claims'][0]['quote'], hit['text'])
         self.assertEqual((result['claims'][0]['start'], result['claims'][0]['end']), (10, 11))
 
     def test_unknown_model_citations_are_rejected_after_bounded_retry(self):
         evidence = [{'id': 'x', 'text': 'Payment is due after thirty days.'}]
-        with patch('codeatlas.models.model_request', return_value={'response': json.dumps({'abstain': False, 'claims': [{'text': 'Wrong', 'citation': 'S9'}]})}) as request:
+        with patch('codeatlas.models.model_request', return_value={'message': {'content': json.dumps({'claims': [{'text': 'Wrong', 'citation': 'S9'}]})}}) as request:
             with self.assertRaises(ModelError):
                 generate_claims('When?', evidence, 'model', 'http://localhost:11434')
         self.assertEqual(request.call_count, 2)
+
+    def test_empty_model_claims_abstain_without_redundant_flag(self):
+        with patch('codeatlas.models.model_request', return_value={'message': {'content': '{"claims": []}'}}):
+            result = generate_claims('Who?', [{'id': 'x', 'text': 'No named person.'}], 'model', 'http://localhost:11434')
+        self.assertEqual(result, {'abstain': True, 'claims': []})
 
     def test_persistent_vector_cache_reuses_content_and_models_are_separate(self):
         with tempfile.TemporaryDirectory() as folder:

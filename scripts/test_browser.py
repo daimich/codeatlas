@@ -42,6 +42,16 @@ def main():
                 expect(page.locator('#mode')).to_have_text('Source evidence')
                 expect(page.locator('#results')).to_contain_text('example-token')
                 expect(page.locator('#results .trace').first).to_be_visible()
+                # Exercise presentation of a valid abstention using the real retrieved evidence.
+                def abstain(route):
+                    response = route.fetch()
+                    payload = dict(response.json(), mode='ollama', abstained=True, claims=[])
+                    route.fulfill(response=response, json=payload)
+                page.route('**/api/ask', abstain)
+                page.locator('#submit').click()
+                expect(page.locator('#mode')).to_have_text('Source evidence · model abstained')
+                expect(page.locator('#results')).to_contain_text('example-token')
+                page.unroute('**/api/ask', abstain)
                 (root / 'new.py').write_text('def zebracounter():\n    return 42\n')
                 page.locator('#reindex').click()
                 expect(page.locator('#count')).to_have_text('5 files indexed')
@@ -61,7 +71,7 @@ def main():
             server.shutdown()
             server.server_close()
             worker.join()
-    print('PASS: search, caller graph, source explanations, incremental refresh, deletion, no browser errors')
+    print('PASS: search, caller graph, source explanations, abstention evidence, incremental refresh, deletion, no browser errors')
 
 
 if __name__ == '__main__':

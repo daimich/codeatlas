@@ -4,7 +4,7 @@ The completion target is a dependable single-user local application. These check
 
 | Check | Coverage |
 |---|---|
-| Unit/regression tests | 25 tests; Python 3.11, 3.12 and 3.13 in CI |
+| Unit/regression tests | 26 tests; Python 3.11, 3.12 and 3.13 in CI |
 | Browser acceptance | Actual Chromium UI interactions, persistence/refresh, empty states, browser errors |
 | Docker acceptance | Image startup, real HTTP endpoints, named-volume replacement, deletion/refresh |
 | Real-model acceptance | Actual MiniLM embeddings, persisted vectors, Ollama Qwen 2.5 1.5B generation over HTTP, valid citations, fixture answer content and abstention for absent facts |

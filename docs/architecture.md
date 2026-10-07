@@ -16,4 +16,4 @@ Ollama generates at most four JSON claims from bounded source context, citing sh
 
 The local web server checks Host/Origin, bounds input and renders source as text. The Docker image runs as a non-root user and supports read-only source mounts and persistent index volumes. Hosted authentication, tenancy and remote access controls are outside this scope.
 
-Primary references: [Python AST](https://docs.python.org/3/library/ast.html), [Git ls-files](https://git-scm.com/docs/git-ls-files), [Sentence Transformers](https://sbert.net/docs/package_reference/sentence_transformer/model.html), [Ollama generation](https://docs.ollama.com/api/generate).
+Primary references: [Python AST](https://docs.python.org/3/library/ast.html), [Git ls-files](https://git-scm.com/docs/git-ls-files), [Sentence Transformers](https://sbert.net/docs/package_reference/sentence_transformer/model.html), [Ollama generation](https://docs.ollama.com/api/chat).

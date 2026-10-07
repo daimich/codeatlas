@@ -26,8 +26,8 @@ def main():
     request_model = models.model_request
     def record_request(*positional, **keywords):
         response = request_model(*positional, **keywords)
-        if positional[1] == '/api/generate':
-            print('Real Ollama response: ' + json.dumps(response), file=sys.stderr)
+        if positional[1] == '/api/chat':
+            print('Real Ollama response: ' + json.dumps({k: response.get(k) for k in ('message', 'done', 'done_reason')}), file=sys.stderr)
         return response
     models.model_request = record_request
     with tempfile.TemporaryDirectory() as folder:
